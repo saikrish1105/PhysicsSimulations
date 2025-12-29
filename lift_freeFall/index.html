@@ -1,12 +1,562 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-        <meta charset="utf-8" />
-    </head>
-    <body>
-        <main>
-        </main>
-        <script src="freeFallLift.js"></script>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free-Fall Physics Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #00c9ff, #92fe9d);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1100px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .simulation-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .simulation-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00c9ff, #92fe9d);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        #simulation-canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .data-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 0;
+        }
+        
+        .data-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #92fe9d, #00c9ff);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .controls-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #00c9ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            font-size: 1.3rem;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .slider-value {
+            color: #92fe9d;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #00c9ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 201, 255, 0.7);
+            border: 2px solid white;
+        }
+        
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 140px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00c9ff, #0072ff);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 114, 255, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .data-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .data-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 201, 255, 0.3);
+        }
+        
+        .data-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .data-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #92fe9d;
+            margin: 10px 0;
+        }
+        
+        .data-unit {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-left: 3px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+        }
+        
+        .status-dot.active {
+            background: #2ed573;
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.7);
+        }
+        
+        .status-text {
+            font-weight: bold;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid #00c9ff;
+        }
+        
+        .instructions h3 {
+            color: #00c9ff;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .highlight {
+            color: #00c9ff;
+            font-weight: bold;
+        }
+        
+        .simulation-area {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .data-panel {
+            position: relative;
+        }
+        
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .time-display {
+            font-size: 1.1rem;
+            background: rgba(0, 201, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 201, 255, 0.3);
+        }
+        
+        .impact-counter {
+            font-size: 1.1rem;
+            background: rgba(146, 254, 157, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(146, 254, 157, 0.3);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-weight-hanging"></i> Free-Fall Physics Simulation</h1>
+            <p class="subtitle">Visualize the physics of a free-falling elevator with a bouncing ball inside. Adjust parameters to see how gravity, elasticity, air resistance, and mass affect the motion.</p>
+        </header>
+        
+        <div class="content">
+            <div class="simulation-area">
+                <div class="simulation-container">
+                    <div id="simulation-canvas"></div>
+                </div>
+                
+                <div class="data-panel">
+                    <div class="data-header">
+                        <h2 class="panel-title"><i class="fas fa-chart-line"></i> Real-Time Data</h2>
+                        <div class="time-display">
+                            <i class="far fa-clock"></i> Time: <span id="time-value">0.0</span>s
+                        </div>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-tachometer-alt"></i> Lift Velocity
+                            </div>
+                            <div class="data-value" id="lift-velocity">0.00</div>
+                            <div class="impact-counter">
+                                <i class="fas fa-arrow-down"></i> <span id="lift-direction">Stationary</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-tachometer-alt"></i> Ball Velocity
+                            </div>
+                            <div class="data-value" id="ball-velocity">0.00</div>
+                            <div class="impact-counter">
+                                <i class="fas fa-arrow-down"></i> <span id="ball-direction">Stationary</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-ruler-vertical"></i> Lift Height
+                            </div>
+                            <div class="data-value" id="lift-height">100.0</div>
+                            <span class="data-unit">px from ground</span>
+                        </div>
+                        
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-ruler-vertical"></i> Ball Height
+                            </div>
+                            <div class="data-value" id="ball-height">185.0</div>
+                            <span class="data-unit">px from ground</span>
+                        </div>
+                        
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-fire"></i> Energy
+                            </div>
+                            <div class="data-value" id="energy-value">0.0</div>
+                            <span class="data-unit">J (relative)</span>
+                        </div>
+                        
+                        <div class="data-card">
+                            <div class="data-label">
+                                <i class="fas fa-bounce"></i> Bounces
+                            </div>
+                            <div class="data-value" id="bounce-count">0</div>
+                            <span class="data-unit">ball impacts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="status-indicator">
+                        <div class="status-dot" id="status-dot"></div>
+                        <div class="status-text" id="status-text">Ready to Fall</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <div>
+                    <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Simulation Controls</h2>
+                    
+                    <div class="button-container">
+                        <button class="btn btn-primary" id="startBtn">
+                            <i class="fas fa-play"></i> Start Free-Fall
+                        </button>
+                        <button class="btn btn-secondary" id="resetBtn">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                        <button class="btn btn-secondary" id="pauseBtn">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="panel-title"><i class="fas fa-cogs"></i> Physics Parameters</h2>
+                    
+                    <div class="control-group">
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-globe-americas"></i> Gravity (g):</span>
+                                <span class="slider-value" id="gravity-value">0.15</span>
+                            </div>
+                            <input type="range" id="gravity-slider" min="0.01" max="0.5" step="0.01" value="0.15">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-basketball-ball"></i> Ball Elasticity:</span>
+                                <span class="slider-value" id="elasticity-value">0.90</span>
+                            </div>
+                            <input type="range" id="elasticity-slider" min="0.1" max="0.99" step="0.01" value="0.90">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-wind"></i> Air Resistance (k):</span>
+                                <span class="slider-value" id="drag-value">0.05</span>
+                            </div>
+                            <input type="range" id="drag-slider" min="0" max="0.2" step="0.01" value="0.05">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-weight-hanging"></i> Lift Mass:</span>
+                                <span class="slider-value" id="lift-mass-value">100</span>
+                            </div>
+                            <input type="range" id="lift-mass-slider" min="10" max="200" step="1" value="100">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span><i class="fas fa-weight"></i> Ball Mass:</span>
+                                <span class="slider-value" id="ball-mass-value">1</span>
+                            </div>
+                            <input type="range" id="ball-mass-slider" min="0.1" max="10" step="0.1" value="1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="panel-title"><i class="fas fa-info-circle"></i> Physics Insights</h2>
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 10px; border-left: 3px solid #92fe9d;">
+                        <p style="margin-bottom: 10px; line-height: 1.6;">
+                            <strong>Did you know?</strong> In free fall with air resistance, heavier objects fall faster than lighter ones when they have the same shape.
+                        </p>
+                        <p style="line-height: 1.6;">
+                            The ball bounces due to conservation of momentum and energy loss during impact (modeled by elasticity).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+            <ul>
+                <li>Click <span class="highlight">"Start Free-Fall"</span> to begin the simulation of the elevator dropping.</li>
+                <li>The <span class="highlight">ball inside the elevator</span> will bounce according to the elasticity setting.</li>
+                <li>Adjust <span class="highlight">gravity</span> to change how fast objects fall.</li>
+                <li>Modify <span class="highlight">air resistance</span> to see how drag affects falling objects.</li>
+                <li>Change <span class="highlight">mass values</span> to observe how different weights behave in free fall.</li>
+                <li>Watch the <span class="highlight">real-time data</span> panels to track velocities and positions.</li>
+                <li>Use <span class="highlight">Pause</span> to freeze the simulation at any moment.</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Free-Fall Physics Simulation | Created with p5.js | Demonstrates Newtonian Physics with Drag Forces</p>
+        </footer>
+    </div>
+    <script src="freeFallLift.js"></script>
+</body>
 </html>
