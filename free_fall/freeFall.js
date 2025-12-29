@@ -23,11 +23,13 @@ function setup(){
 function startFall(){
     falling = true;
 }
+
 function reset(){
     falling = false;
     y = 50;
     vy = 0;
 }
+
 function draw(){
     // remember the canvas start (0,0) from top left (x,y)
     background(0);

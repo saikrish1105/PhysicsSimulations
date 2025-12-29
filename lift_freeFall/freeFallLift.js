@@ -1,15 +1,19 @@
 let lift_width = 80; // width of lift
 let lift_height = 100; // height of lift
 let lift_x,lift_y; // coordinates of lift
+let ay_lift; // acceleration on lift
 let vy_lift = 0; // velocity of the lift
 
 let ball_x,ball_y; // coordinates of ball
 let ball_d = 15; // diamter of ball inside
+let ay_ball; // accelearation on ball
 let vy_ball = 0; // velocity of the ball
 
 let g = 0.15; // gravity (makes the lift fall slow or)
 let e_ball = 0.9; // elasticity of the ball depends inversely on weight
-let air_resistance = 0.04; // Resistance to make the ball "float"
+let mass_lift = 100; // Heavy!
+let mass_ball = 1;   // Light!
+let drag_coeff = 0.05; // 'k' - How thick the air is
 
 let falling = false;
 let impact = false;
@@ -47,21 +51,36 @@ function draw(){
 
     // simulate a free falling rectangle (lift)
     if(falling){
+        if (impact) {
+            // If lift hit ground 
+            ay_lift = 0; // lift no acceleration
+            ay_ball = g; // ball normal acceleration without dragg 
+        } else {
+        // If falling, calculate the drag physics
+        // Drag Force = k * v^2
+            let dragForceLift = drag_coeff * (vy_lift * vy_lift);
+            let dragForceBall = drag_coeff * (vy_ball * vy_ball);
+
+            ay_lift = g - (dragForceLift / mass_lift);
+            ay_ball = g - (dragForceBall / mass_ball);
+        }
+
         // lift free fall and displacement
-        vy_lift += g;
+        vy_lift += ay_lift; // diff values of air resistance
         lift_y += vy_lift;
 
         // ball free fall and displaceent
-        vy_ball += g-air_resistance;
+        vy_ball += ay_ball; // more affected by air resistance
         ball_y += vy_ball;
  
         // lift boundaries - ceiling and floor
         let lift_floor = lift_y + lift_height - ball_d/2;
         let lift_ceiling = lift_y + ball_d/2;
 
-        // if ball goes out of lift when floating up
+        // when ball gets pushed to ceiling and moves as fast as lift
         if(!impact && ball_y<=lift_ceiling){
             ball_y = lift_ceiling;
+            vy_ball = vy_lift;
         }
 
         // lift hit ground        
