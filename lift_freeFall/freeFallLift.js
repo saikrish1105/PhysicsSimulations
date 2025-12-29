@@ -7,8 +7,9 @@ let ball_x,ball_y; // coordinates of ball
 let ball_d = 15; // diamter of ball inside
 let vy_ball = 0; // velocity of the ball
 
-let g = 0.98; // gravity (makes the lift fall slow or)
-let e_ball = 0.9; // elasticity of the ball
+let g = 0.15; // gravity (makes the lift fall slow or)
+let e_ball = 0.9; // elasticity of the ball depends inversely on weight
+let air_resistance = 0.04; // Resistance to make the ball "float"
 
 let falling = false;
 let impact = false;
@@ -32,6 +33,7 @@ function setup(){
     // creating a button to start free fall
     startBtn = createButton("Start Free-Fall");
     startBtn.mousePressed(startFall);
+    startBtn.position(10,10);
 
     // initiating the coordinates
     lift_x = width/2-lift_width/2; // centre of screen no matetr what
@@ -50,12 +52,17 @@ function draw(){
         lift_y += vy_lift;
 
         // ball free fall and displaceent
-        vy_ball += g;
+        vy_ball += g-air_resistance;
         ball_y += vy_ball;
-
+ 
         // lift boundaries - ceiling and floor
         let lift_floor = lift_y + lift_height - ball_d/2;
         let lift_ceiling = lift_y + ball_d/2;
+
+        // if ball goes out of lift when floating up
+        if(!impact && ball_y<=lift_ceiling){
+            ball_y = lift_ceiling;
+        }
 
         // lift hit ground        
         if(lift_y>height-(lift_height)){

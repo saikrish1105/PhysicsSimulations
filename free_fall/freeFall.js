@@ -17,7 +17,7 @@ function setup(){
 
     // reset button
     resetBtn = createButton("Reset");
-    startBtn.mousePressed(reset);
+    resetBtn.mousePressed(reset);
 }
 
 function startFall(){
